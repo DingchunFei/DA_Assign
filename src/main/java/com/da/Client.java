@@ -39,15 +39,15 @@ public class Client {
                 //矫正当前漂移
                 setSkew(currentTime - new Date().getTime());
                 System.out.println("current machine time is: "+ new Date());
-                System.out.println("current server time is: "+ new Date(new Date().getTime()+skew));
-                System.out.println("skew is: "+skew);
+                System.out.println("current server time is: "+ new Date(new Date().getTime()+getSkew()));
+                System.out.println("skew is: "+getSkew());
             }
         }
     }
 
     //收到服务器请求后，向服务器发送时间
     public void sendCurrentTime(Socket socket){
-        Long currentTime = skew + new Date().getTime();
+        Long currentTime = getSkew() + new Date().getTime();
         String jsonStr = JsonUtil.long2Json(currentTime);
         PrintWriter out;
         try  {

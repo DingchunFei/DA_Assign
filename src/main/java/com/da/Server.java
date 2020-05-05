@@ -29,7 +29,7 @@ public class Server {
                 e.printStackTrace();
             }
         }).start();
-
+        //create a new thread to handle a coming request
         while(true)  {
             Socket socket = ss.accept() ;
             sockets.add(socket) ;
@@ -40,6 +40,7 @@ public class Server {
         }
     }
 
+    //send massage to slave servers
     public void send2Sockets(String jsonStr) throws Exception{
         for(Socket slaveSocket : sockets)  {
             PrintWriter pw = null;
@@ -72,7 +73,7 @@ public class Server {
         String jsonStr = JsonUtil.long2Json(reqParams);
         //向所有的socket发送一个获取时间的请求
         send2Sockets(jsonStr);
-
+        //the time when this broadcast starts
         Long startTime = new Date().getTime();
 
         System.out.println("当前socket大小 ===> "+ sockets.size());
