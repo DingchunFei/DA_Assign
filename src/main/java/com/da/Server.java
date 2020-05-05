@@ -9,12 +9,35 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Server {
+    //interval to broadcast
+    public final static int interval = 5000;
+    //allow slight skew
+    public final static int lowerBound = 10;
+    //ignore too large skew
+    public final static int upperBound = 200;
+    //clock of server
+    private Clock currentClock;
 
     private List<Socket> sockets = new CopyOnWriteArrayList<>() ;    //使用CopyOnWriteArrayList保证线程安全
 
     private static volatile Map<Socket,Date> socketDateMap = new HashMap<>();
 
     public Server() throws IOException {
+        //create a clock for this machine and set its current time
+        currentClock = new Clock(new Date().getTime());
+        //a thread to update clock with a specific frequency
+        new Thread(()->{
+            while(true){
+                try {
+                    Thread.sleep(1000);
+                    currentClock.updateCurrentTime(1000l);
+                    //System.out.println("+++++current time++++ "+currentClock.getCurrentTime());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+
         ServerSocket ss = new ServerSocket(8090) ;
         System.out.println("Server is listening the port : 8090") ;
 
@@ -23,7 +46,7 @@ public class Server {
             try{
                 while(true){
                     if(sockets.size()!=0) broadcast();
-                    Thread.sleep(2000);
+                    Thread.sleep(interval);
                 }
             }catch (Exception e){
                 e.printStackTrace();
@@ -41,13 +64,11 @@ public class Server {
     }
 
     //send massage to slave servers
-    public void send2Sockets(String jsonStr) throws Exception{
-        for(Socket slaveSocket : sockets)  {
-            PrintWriter pw = null;
-            pw = new PrintWriter(new OutputStreamWriter(slaveSocket.getOutputStream()));
-            pw.println(jsonStr) ;
-            pw.flush();
-        }
+    public void send2Sockets(String jsonStr, Socket slaveSocket) throws Exception{
+        PrintWriter pw = null;
+        pw = new PrintWriter(new OutputStreamWriter(slaveSocket.getOutputStream()));
+        pw.println(jsonStr) ;
+        pw.flush();
     }
 
     public void checkSocketsAlive(){
@@ -66,13 +87,19 @@ public class Server {
      */
     public void broadcast() throws Exception{
         //定义好，如果值是-1表示是一个获取时间的请求
-        Long reqParams = -1l;
-        Long meanTime = 0l;
+        Long reqParams = 0l;
+        Long meanTime = currentClock.getCurrentTime();
+        int numOfIgnore = 0;//number of which servers are ignored
+
+        System.out.println("Sever current time: " + new Date(meanTime));
+
         //每次发送时间前把map里的所有内容清空
         socketDateMap.clear();
         String jsonStr = JsonUtil.long2Json(reqParams);
         //向所有的socket发送一个获取时间的请求
-        send2Sockets(jsonStr);
+        for(Socket slaveSocket : sockets) {
+            send2Sockets(jsonStr, slaveSocket);
+        }
         //the time when this broadcast starts
         Long startTime = new Date().getTime();
 
@@ -90,16 +117,24 @@ public class Server {
 
         Set<Map.Entry<Socket, Date>> entries = socketDateMap.entrySet();
         for (Map.Entry<Socket,Date> entry: entries){
+            //if the skew is larger than upper bound, ignore it
+            if (upperBound < Math.abs(entry.getValue().getTime() - currentClock.getCurrentTime())) {
+                numOfIgnore += 1;
+                continue;
+            }
             meanTime = meanTime + entry.getValue().getTime();
         }
 
         //求一个平均值
-        meanTime = meanTime / socketDateMap.size();
-        System.out.println("meanTime ===> " + meanTime);
+        meanTime = meanTime / (socketDateMap.size() + 1 - numOfIgnore);
+        System.out.println("meanTime ===> " + new Date(meanTime));
 
-        jsonStr = JsonUtil.long2Json(meanTime);
-        //向所有的socket发送一个获取时间的请求
-        send2Sockets(jsonStr);
+        //send amount for each follower that it should adjust by
+        for(Map.Entry<Socket,Date> entry: entries) {
+            Long amountToAdjust = entry.getValue().getTime() - meanTime;
+            jsonStr = JsonUtil.long2Json(amountToAdjust);
+            send2Sockets(jsonStr, entry.getKey());
+        }
     }
 
     public static void putDateIntoMap(Socket socket, Date date){

@@ -43,8 +43,7 @@ public class Client {
                 sendCurrentTime(socket);
             }
             else{//clock needs to be adjusted
-                System.out.println("current machine time is: "+ new Date());
-                System.out.println("current server time is: "+ new Date(new Date().getTime() + amountToAdjust));
+                System.out.println("current machine time is: "+ new Date(currentClock.getCurrentTime()));
                 System.out.println("skew is: "+ amountToAdjust);
                 adjustClock(amountToAdjust);
             }
