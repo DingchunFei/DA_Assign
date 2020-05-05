@@ -6,8 +6,11 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="berkeley_algorithm" />
+        <module name="da-berkeley-algorithm" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="da-berkeley-algorithm" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
 </project>
