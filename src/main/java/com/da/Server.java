@@ -17,6 +17,8 @@ public class Server {
     public final static int upperBound = 1000;
     //clock of server
     private Clock currentClock;
+    //the time when a broadcast starts
+    Long broadcastTime;
 
     private List<Socket> sockets = new CopyOnWriteArrayList<>() ;    //使用CopyOnWriteArrayList保证线程安全
 
@@ -88,7 +90,7 @@ public class Server {
     public void broadcast() throws Exception{
         //定义好，如果值是-1表示是一个获取时间的请求
         Long reqParams = -1l;
-        Long meanTime = currentClock.getCurrentTime();
+        Long meanTime = 0l;
         int numOfIgnore = 0;//number of which servers are ignored
 
         //System.out.println("[Sever current time: ]" + new Date(meanTime));
@@ -101,20 +103,21 @@ public class Server {
             send2Sockets(jsonStr, slaveSocket);
         }
         //the time when this broadcast starts
-        Long startTime = new Date().getTime();
+        broadcastTime = new Date().getTime();
 
         System.out.println("[当前socket大小 ===>] "+ sockets.size());
-        //等到获取所有socket传来的时间
 
         checkSocketsAlive();
 
         while(socketDateMap.size()!=sockets.size()){
             //如果超过一秒后仍然未收全所有socket的时间，这次广播作废，等待下一轮广播
-            if(new Date().getTime() -startTime > 1000){
+            if(new Date().getTime() -broadcastTime > 1000){
                 return;
             }
         }
         //System.out.println("[server time ++++++]" + meanTime);
+        //compute mean time
+        meanTime = broadcastTime;//count on leader's time
         Set<Map.Entry<Socket, Date>> entries = socketDateMap.entrySet();
         for (Map.Entry<Socket,Date> entry: entries){
             //if the skew is larger than upper bound, ignore it

@@ -3,11 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="2974b1b0-f5ec-47db-8631-6bf2124ebce2" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/da/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/da/Client.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/da/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/da/Server.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/da/Client.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/da/Client.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/da/NodeRunner.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/da/NodeRunner.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/da/Server.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/da/Server.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,7 +25,7 @@
     <property name="aspect.path.notification.shown" value="true" />
     <property name="settings.editor.selected.configurable" value="Ignore Files Support" />
   </component>
-  <component name="RunManager" selected="Application.Server">
+  <component name="RunManager" selected="Application.Client">
     <configuration name="Client" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.da.Client" />
       <module name="da-berkeley-algorithm" />
@@ -58,8 +54,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.Server" />
         <item itemvalue="Application.Client" />
+        <item itemvalue="Application.Server" />
       </list>
     </recent_temporary>
   </component>
@@ -74,7 +70,7 @@
       <option name="presentableId" value="Default" />
       <updated>1588684108863</updated>
       <workItem from="1588684110085" duration="4384000" />
-      <workItem from="1588723625507" duration="3749000" />
+      <workItem from="1588723625507" duration="4534000" />
     </task>
     <servers />
   </component>
@@ -82,22 +78,22 @@
     <option name="version" value="1" />
   </component>
   <component name="WindowStateProjectService">
-    <state width="1226" height="304" key="GridCell.Tab.0.bottom" timestamp="1588729011496">
+    <state width="1226" height="304" key="GridCell.Tab.0.bottom" timestamp="1588730046863">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1226" height="304" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1588729011496" />
-    <state width="1226" height="304" key="GridCell.Tab.0.center" timestamp="1588729011496">
+    <state width="1226" height="304" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1588730046863" />
+    <state width="1226" height="304" key="GridCell.Tab.0.center" timestamp="1588730046863">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1226" height="304" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1588729011496" />
-    <state width="1226" height="304" key="GridCell.Tab.0.left" timestamp="1588729011496">
+    <state width="1226" height="304" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1588730046863" />
+    <state width="1226" height="304" key="GridCell.Tab.0.left" timestamp="1588730046863">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1226" height="304" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1588729011496" />
-    <state width="1226" height="304" key="GridCell.Tab.0.right" timestamp="1588729011496">
+    <state width="1226" height="304" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1588730046863" />
+    <state width="1226" height="304" key="GridCell.Tab.0.right" timestamp="1588730046863">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state width="1226" height="304" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1588729011496" />
+    <state width="1226" height="304" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1588730046863" />
     <state width="1226" height="344" key="GridCell.Tab.1.bottom" timestamp="1588727426038">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
