@@ -10,7 +10,7 @@ import java.util.*;
 public class Client {
 
     private Clock currentClock;
-    private int rate = 1000;
+    private int rate = 900;
 
     public Client() throws IOException {
         //create a clock for this machine and set its current time
@@ -23,7 +23,7 @@ public class Client {
                 try {
                     Thread.sleep(1000);
                     currentClock.updateCurrentTime(1l * rate);
-                    //System.out.println("+++++current time++++ "+currentClock.getCurrentTime());
+                    System.out.println("+++++current time++++ "+currentClock.getCurrentTime());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -38,16 +38,16 @@ public class Client {
         String jsonStr = null ;
         while( (jsonStr = br.readLine()) != null)  {
             Long amountToAdjust = JsonUtil.json2long(jsonStr);
-            System.out.println("amount that follower must adjust its clock ===>" + amountToAdjust);
-            if(amountToAdjust == 0l){   //确保是服务器发来的获取时间的请求，即值为0
+            System.out.println("[current follower time is: ]"+ new Date(currentClock.getCurrentTime()));
+            System.out.println("[skew is: ]"+ amountToAdjust);
+            if(amountToAdjust == -1l){   //确保是服务器发来的获取时间的请求，即值为-1
                 sendCurrentTime(socket);
             }
             else{//clock needs to be adjusted
-                System.out.println("current machine time is: "+ new Date(currentClock.getCurrentTime()));
-                System.out.println("skew is: "+ amountToAdjust);
                 adjustClock(amountToAdjust);
             }
         }
+        System.out.println("out of the while");
     }
 
     public void adjustClock(Long amountToAdjust) {

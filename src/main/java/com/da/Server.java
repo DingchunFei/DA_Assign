@@ -12,9 +12,9 @@ public class Server {
     //interval to broadcast
     public final static int interval = 5000;
     //allow slight skew
-    public final static int lowerBound = 10;
+    public final static int lowerBound = 100;
     //ignore too large skew
-    public final static int upperBound = 200;
+    public final static int upperBound = 1000;
     //clock of server
     private Clock currentClock;
 
@@ -87,11 +87,11 @@ public class Server {
      */
     public void broadcast() throws Exception{
         //定义好，如果值是-1表示是一个获取时间的请求
-        Long reqParams = 0l;
+        Long reqParams = -1l;
         Long meanTime = currentClock.getCurrentTime();
         int numOfIgnore = 0;//number of which servers are ignored
 
-        System.out.println("Sever current time: " + new Date(meanTime));
+        //System.out.println("[Sever current time: ]" + new Date(meanTime));
 
         //每次发送时间前把map里的所有内容清空
         socketDateMap.clear();
@@ -103,7 +103,7 @@ public class Server {
         //the time when this broadcast starts
         Long startTime = new Date().getTime();
 
-        System.out.println("当前socket大小 ===> "+ sockets.size());
+        System.out.println("[当前socket大小 ===>] "+ sockets.size());
         //等到获取所有socket传来的时间
 
         checkSocketsAlive();
@@ -114,7 +114,7 @@ public class Server {
                 return;
             }
         }
-
+        //System.out.println("[server time ++++++]" + meanTime);
         Set<Map.Entry<Socket, Date>> entries = socketDateMap.entrySet();
         for (Map.Entry<Socket,Date> entry: entries){
             //if the skew is larger than upper bound, ignore it
@@ -127,11 +127,11 @@ public class Server {
 
         //求一个平均值
         meanTime = meanTime / (socketDateMap.size() + 1 - numOfIgnore);
-        System.out.println("meanTime ===> " + new Date(meanTime));
-
+        //System.out.println("[meanTime ===> ]" + new Date(meanTime));
+        System.out.println("[mean time ++++++]" + meanTime);
         //send amount for each follower that it should adjust by
         for(Map.Entry<Socket,Date> entry: entries) {
-            Long amountToAdjust = entry.getValue().getTime() - meanTime;
+            Long amountToAdjust = meanTime - entry.getValue().getTime();
             jsonStr = JsonUtil.long2Json(amountToAdjust);
             send2Sockets(jsonStr, entry.getKey());
         }
@@ -168,7 +168,7 @@ class NodeRunner implements Runnable  {
                 Date date = new Date(currentTime);
                 //将获取到的Date放入Map中
                 Server.putDateIntoMap(currentSocket,date);
-                System.out.println("server收到的"+ currentSocket.getInetAddress().getHostAddress()+"时间===> "+date);
+                System.out.println("server收到的 "+ currentSocket.getInetAddress().getHostAddress()+"时间===> "+date);
             }
         }catch(IOException e)  {
             e.printStackTrace();
