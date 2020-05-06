@@ -12,9 +12,9 @@ public class Server {
     //interval to broadcast
     public final static int interval = 5000;
     //allow slight skew
-    public final static int lowerBound = 100;
+    public final static int lowerBound = 20;
     //ignore too large skew
-    public final static int upperBound = 1000;
+    public final static int upperBound = 500;
     //clock of server
     private Clock currentClock;
     //the time when a broadcast starts
@@ -59,7 +59,7 @@ public class Server {
             Socket socket = ss.accept() ;
             sockets.add(socket) ;
             String ip = socket.getInetAddress().getHostAddress() ;
-            System.out.println("New User coming！ip:"+ip) ;
+            System.out.println("[New User coming！ip:]"+ip) ;
             Thread thread = new Thread(new NodeRunner(socket)) ;
             thread.start();
         }
@@ -135,6 +135,8 @@ public class Server {
         //send amount for each follower that it should adjust by
         for(Map.Entry<Socket,Date> entry: entries) {
             Long amountToAdjust = meanTime - entry.getValue().getTime();
+            if(lowerBound > amountToAdjust)//allow slight skew, no need to change
+                amountToAdjust = 0l;
             jsonStr = JsonUtil.long2Json(amountToAdjust);
             send2Sockets(jsonStr, entry.getKey());
         }
