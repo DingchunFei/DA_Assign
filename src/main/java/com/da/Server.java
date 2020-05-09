@@ -135,7 +135,7 @@ public class Server {
         //send amount for each follower that it should adjust by
         for(Map.Entry<Socket,Date> entry: entries) {
             Long amountToAdjust = meanTime - entry.getValue().getTime();
-            if(lowerBound > amountToAdjust)//allow slight skew, no need to change
+            if(lowerBound > Math.abs(amountToAdjust))//allow slight skew, no need to change
                 amountToAdjust = 0l;
             jsonStr = JsonUtil.long2Json(amountToAdjust);
             send2Sockets(jsonStr, entry.getKey());

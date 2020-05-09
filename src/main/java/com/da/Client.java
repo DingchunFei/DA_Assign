@@ -54,8 +54,8 @@ public class Client {
         if(amountToAdjust > 0l) {//adjust clock forward
             currentClock.updateCurrentTime(amountToAdjust);
         }
-        else {//slow the clock TODO
-
+        else {//slow the clock
+            rate = (int) (rate * 0.9);
         }
     }
 
