@@ -14,7 +14,7 @@ public class Server {
     //allow slight skew
     public final static int lowerBound = 20;
     //ignore too large skew
-    public final static int upperBound = 500;
+    public final static int upperBound = 300000;//5 minutes
     //clock of server
     private Clock currentClock;
     //the time when a broadcast starts
