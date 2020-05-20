@@ -9,39 +9,42 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Server {
-    //interval to broadcast
-    public final static int interval = 5000;
-    //allow slight skew
-    public final static int lowerBound = 20;
-    //ignore too large skew
-    public final static int upperBound = 300000;//5 minutes
-    //clock of server
-    private Clock currentClock;
-    //the time when a broadcast starts
-    Long broadcastTime;
 
-    private List<Socket> sockets = new CopyOnWriteArrayList<>() ;    //use CopyOnWriteArrayList to ensure thread secure
+    public final static int interval = 5000;//interval to broadcast
 
-    private static volatile Map<Socket,Date> socketDateMap = new HashMap<>();
+    public final static int lowerBound = 200;//allow slight skew
+
+    public final static int upperBound = 5*1000;//ignore too large skew//5 seconds
+
+    private Clock currentClock;//clock of this server
+
+    private Long broadcastTime;//the time when a broadcast starts
+
+    private int rate = 1000;//clock rate
+
+    private List<Socket> sockets = new CopyOnWriteArrayList<>() ;//use CopyOnWriteArrayList to ensure thread secure
+
+    private static volatile Map<Socket, Date> socketDateMap = new HashMap<>();//use volatile type to ensure thread secure
 
     public Server() throws IOException {
         //create a clock for this machine and set its current time
         currentClock = new Clock(new Date().getTime());
+
+        ServerSocket ss = new ServerSocket(8090) ;
+        System.out.println("Server is listening the port : 8090") ;
+
         //a thread to update clock with a specific frequency
         new Thread(()->{
             while(true){
                 try {
                     Thread.sleep(1000);
-                    currentClock.updateCurrentTime(1000l);
-                    //System.out.println("+++++current time++++ "+currentClock.getCurrentTime());
+                    currentClock.updateCurrentTime(1l * rate);
+                    System.out.println("[current the master's time: ]"+new Date(currentClock.getCurrentTime())+" [Rate: ]"+rate);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }).start();
-
-        ServerSocket ss = new ServerSocket(8090) ;
-        System.out.println("Server is listening the port : 8090") ;
 
         //this thread s used to broadcast request to follower to get their time
         new Thread(()->{
@@ -54,13 +57,14 @@ public class Server {
                 e.printStackTrace();
             }
         }).start();
+
         //create a new thread to handle a coming request
         while(true)  {
             Socket socket = ss.accept() ;
             sockets.add(socket) ;
             String ip = socket.getInetAddress().getHostAddress() ;
             System.out.println("[New User coming！ip:]"+ip) ;
-            Thread thread = new Thread(new NodeRunner(socket)) ;
+            Thread thread = new Thread(new TimeReceiver(socket)) ;
             thread.start();
         }
     }
@@ -84,6 +88,19 @@ public class Server {
         }
     }
 
+    //adjust time on this server
+    private void adjustClock(Long amountToAdjust) {
+        if(amountToAdjust > 0l) {//adjust clock forward
+            System.out.println("[Clock is slower. Should be adjust by: ]" + amountToAdjust);
+            currentClock.updateCurrentTime(amountToAdjust);
+        }
+        else {//slow the clock
+            System.out.println("[Clock is quicker. The skew is: ]" + amountToAdjust);
+            rate = (int) (rate * 0.99);
+            System.out.println("[Now clock rate has been adjust as: ]" + rate);
+        }
+    }
+
     /**
      * broadcast
      */
@@ -92,26 +109,25 @@ public class Server {
         Long reqParams = -1l;
         Long meanTime = 0l;
         int numOfIgnore = 0;//number of which servers are ignored
-
-        //System.out.println("[Sever current time: ]" + new Date(meanTime));
-
         //every time before sending, clear the map
         socketDateMap.clear();
+
         String jsonStr = JsonUtil.long2Json(reqParams);
         //send request to all follower for their time
         for(Socket slaveSocket : sockets) {
             send2Sockets(jsonStr, slaveSocket);
         }
         //the time when this broadcast starts
-        broadcastTime = new Date().getTime();
+        broadcastTime = currentClock.getCurrentTime();
 
-        System.out.println("[the size of current time] "+ sockets.size());
+        System.out.println("[The size of current follower] "+ sockets.size());
 
         checkSocketsAlive();
 
+        //waiting until all of followers give their response
         while(socketDateMap.size()!=sockets.size()){
             //if any follower does not give a response, abort this broadcast
-            if(new Date().getTime() -broadcastTime > 1000){
+            if(currentClock.getCurrentTime() - broadcastTime > 1000){
                 return;
             }
         }
@@ -131,8 +147,12 @@ public class Server {
         //compute mean time
         meanTime = meanTime / (socketDateMap.size() + 1 - numOfIgnore);
         //System.out.println("[meanTime ===> ]" + new Date(meanTime));
-        System.out.println("[mean time ++++++]" + meanTime);
-        //send amount for each follower that it should adjust by
+        System.out.println("[Mean time compute result :]" + new Date(meanTime));
+
+        //adjust master's time, if it is beyond lowerBound
+        if (lowerBound < Math.abs(meanTime - broadcastTime))
+            adjustClock(meanTime - broadcastTime);
+        //send amount for each follower to adjust their time
         for(Map.Entry<Socket,Date> entry: entries) {
             Long amountToAdjust = meanTime - entry.getValue().getTime();
             if(lowerBound > Math.abs(amountToAdjust))//allow slight skew, no need to change
@@ -148,7 +168,7 @@ public class Server {
 
     public static void main(String args[])  {
         try {
-            Server server = new Server();
+            new Server();
         } catch(Exception e)  {
             e.printStackTrace();
         }
@@ -156,10 +176,10 @@ public class Server {
 }
 
 
-class NodeRunner implements Runnable  {
+class TimeReceiver implements Runnable  {
     private Socket currentSocket ;   //current socket
 
-    public NodeRunner (Socket currentSocket)  {
+    public TimeReceiver (Socket currentSocket)  {
         this.currentSocket = currentSocket ;
     }
 
@@ -172,8 +192,8 @@ class NodeRunner implements Runnable  {
                 Long currentTime = JsonUtil.json2long(jsonStr);
                 Date date = new Date(currentTime);
                 //save time from response to map
-                Server.putDateIntoMap(currentSocket,date);
-                System.out.println("server receives "+ currentSocket.getInetAddress().getHostAddress()+"time===> "+date);
+                Server.putDateIntoMap(currentSocket, date);
+                System.out.println("server receives: "+ currentSocket.getInetAddress().getHostAddress()+" time===> "+date);
             }
         }catch(IOException e)  {
             e.printStackTrace();
