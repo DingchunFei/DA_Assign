@@ -20,7 +20,7 @@ public class Server {
     //the time when a broadcast starts
     Long broadcastTime;
 
-    private List<Socket> sockets = new CopyOnWriteArrayList<>() ;    //使用CopyOnWriteArrayList保证线程安全
+    private List<Socket> sockets = new CopyOnWriteArrayList<>() ;    //use CopyOnWriteArrayList to ensure thread secure
 
     private static volatile Map<Socket,Date> socketDateMap = new HashMap<>();
 
@@ -43,7 +43,7 @@ public class Server {
         ServerSocket ss = new ServerSocket(8090) ;
         System.out.println("Server is listening the port : 8090") ;
 
-        //这个线程专门用来发送服务器获取时间的请求
+        //this thread s used to broadcast request to follower to get their time
         new Thread(()->{
             try{
                 while(true){
@@ -78,39 +78,39 @@ public class Server {
             try {
                 socket.sendUrgentData(0xFF);
             } catch (IOException e) {
-                //心跳检测失败，移除该socket
+                //if heart beat check fails, remove the socket
                 sockets.remove(socket);
             }
         }
     }
 
     /**
-     * 向各个socket发送获取时间的请求
+     * broadcast
      */
     public void broadcast() throws Exception{
-        //定义好，如果值是-1表示是一个获取时间的请求
+        //-1 means get current time of a follower
         Long reqParams = -1l;
         Long meanTime = 0l;
         int numOfIgnore = 0;//number of which servers are ignored
 
         //System.out.println("[Sever current time: ]" + new Date(meanTime));
 
-        //每次发送时间前把map里的所有内容清空
+        //every time before sending, clear the map
         socketDateMap.clear();
         String jsonStr = JsonUtil.long2Json(reqParams);
-        //向所有的socket发送一个获取时间的请求
+        //send request to all follower for their time
         for(Socket slaveSocket : sockets) {
             send2Sockets(jsonStr, slaveSocket);
         }
         //the time when this broadcast starts
         broadcastTime = new Date().getTime();
 
-        System.out.println("[当前socket大小 ===>] "+ sockets.size());
+        System.out.println("[the size of current time] "+ sockets.size());
 
         checkSocketsAlive();
 
         while(socketDateMap.size()!=sockets.size()){
-            //如果超过一秒后仍然未收全所有socket的时间，这次广播作废，等待下一轮广播
+            //if any follower does not give a response, abort this broadcast
             if(new Date().getTime() -broadcastTime > 1000){
                 return;
             }
@@ -128,7 +128,7 @@ public class Server {
             meanTime = meanTime + entry.getValue().getTime();
         }
 
-        //求一个平均值
+        //compute mean time
         meanTime = meanTime / (socketDateMap.size() + 1 - numOfIgnore);
         //System.out.println("[meanTime ===> ]" + new Date(meanTime));
         System.out.println("[mean time ++++++]" + meanTime);
@@ -157,7 +157,7 @@ public class Server {
 
 
 class NodeRunner implements Runnable  {
-    private Socket currentSocket ;   //当前socket
+    private Socket currentSocket ;   //current socket
 
     public NodeRunner (Socket currentSocket)  {
         this.currentSocket = currentSocket ;
@@ -171,9 +171,9 @@ class NodeRunner implements Runnable  {
             while((jsonStr = br.readLine()) != null)  {
                 Long currentTime = JsonUtil.json2long(jsonStr);
                 Date date = new Date(currentTime);
-                //将获取到的Date放入Map中
+                //save time from response to map
                 Server.putDateIntoMap(currentSocket,date);
-                System.out.println("server收到的 "+ currentSocket.getInetAddress().getHostAddress()+"时间===> "+date);
+                System.out.println("server receives "+ currentSocket.getInetAddress().getHostAddress()+"time===> "+date);
             }
         }catch(IOException e)  {
             e.printStackTrace();

@@ -33,17 +33,17 @@ public class Client {
         Socket socket = new Socket("localhost",8090) ;
         BufferedReader br = null ;
 
-        //读取服务器的数据
+        //read the message received
         br = new BufferedReader(new InputStreamReader(socket.getInputStream())) ;
         String jsonStr = null ;
         while( (jsonStr = br.readLine()) != null)  {
             Long amountToAdjust = JsonUtil.json2long(jsonStr);
             System.out.println("[current follower time is: ]"+ new Date(currentClock.getCurrentTime()));
             System.out.println("[skew is: ]"+ amountToAdjust);
-            if(amountToAdjust == -1l){   //确保是服务器发来的获取时间的请求，即值为-1
+            if(amountToAdjust == -1l){   //if -1, send current time as a response
                 sendCurrentTime(socket);
             }
-            else{//clock needs to be adjusted
+            else{//else clock needs to be adjusted
                 adjustClock(amountToAdjust);
             }
         }
@@ -59,7 +59,7 @@ public class Client {
         }
     }
 
-    //收到服务器请求后，向服务器发送时间
+    //after receive a request from server, give a response
     public void sendCurrentTime(Socket socket){
         Long currentTime = new Date().getTime();
         String jsonStr = JsonUtil.long2Json(currentTime);
