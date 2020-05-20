@@ -18,13 +18,13 @@ public class Server {
 
     private Clock currentClock;//clock of this server
 
-    private Long broadcastTime;//the time when a broadcast starts
+    private static volatile Long broadcastTime;//the time when a broadcast starts
 
     private int rate = 1000;//clock rate
-
-    private List<Socket> sockets = new CopyOnWriteArrayList<>() ;//use CopyOnWriteArrayList to ensure thread secure
-
-    private static volatile Map<Socket, Date> socketDateMap = new HashMap<>();//use volatile type to ensure thread secure
+    //a list of all sockets, use CopyOnWriteArrayList to ensure thread secure
+    private List<Socket> sockets = new CopyOnWriteArrayList<>() ;
+    //a map for each socket and its info, use type volatile to ensure thread secure
+    private static volatile Map<Socket, Date> socketDateMap = new HashMap<>();
 
     public Server() throws IOException {
         //create a clock for this machine and set its current time
@@ -46,7 +46,7 @@ public class Server {
             }
         }).start();
 
-        //this thread s used to broadcast request to follower to get their time
+        //this thread is used to broadcast request to follower to get their time
         new Thread(()->{
             try{
                 while(true){
@@ -60,16 +60,18 @@ public class Server {
 
         //create a new thread to handle a coming request
         while(true)  {
-            Socket socket = ss.accept() ;
-            sockets.add(socket) ;
-            String ip = socket.getInetAddress().getHostAddress() ;
+            Socket currentSocket = ss.accept() ;
+            sockets.add(currentSocket) ;
+            String ip = currentSocket.getInetAddress().getHostAddress() ;
             System.out.println("[New User coming！ip:]"+ip) ;
-            Thread thread = new Thread(new TimeReceiver(socket)) ;
+            Thread thread = new Thread(new TimeReceiver(currentSocket, currentClock)) ;
             thread.start();
         }
     }
 
-    //send massage to slave servers
+    /**
+     ** send massage to slave servers
+     */
     public void send2Sockets(String jsonStr, Socket slaveSocket) throws Exception{
         PrintWriter pw = null;
         pw = new PrintWriter(new OutputStreamWriter(slaveSocket.getOutputStream()));
@@ -88,7 +90,9 @@ public class Server {
         }
     }
 
-    //adjust time on this server
+    /**
+    ** adjust time on this server
+     */
     private void adjustClock(Long amountToAdjust) {
         if(amountToAdjust > 0l) {//adjust clock forward
             System.out.println("[Clock is slower. Should be adjust by: ]" + amountToAdjust);
@@ -102,7 +106,7 @@ public class Server {
     }
 
     /**
-     * broadcast
+     * broadcast to all follower
      */
     public void broadcast() throws Exception{
         //-1 means get current time of a follower
@@ -118,7 +122,7 @@ public class Server {
             send2Sockets(jsonStr, slaveSocket);
         }
         //the time when this broadcast starts
-        broadcastTime = currentClock.getCurrentTime();
+        setBroadcastTime(currentClock.getCurrentTime());
 
         System.out.println("[The size of current follower] "+ sockets.size());
 
@@ -127,15 +131,15 @@ public class Server {
         //waiting until all of followers give their response
         while(socketDateMap.size()!=sockets.size()){
             //if any follower does not give a response, abort this broadcast
-            if(currentClock.getCurrentTime() - broadcastTime > 1000){
+            if(currentClock.getCurrentTime() - getBroadcastTime() > 4*1000){
                 return;
             }
         }
         //System.out.println("[server time ++++++]" + meanTime);
         //compute mean time
-        meanTime = broadcastTime;//count on leader's time
+        meanTime = getBroadcastTime();//count on leader's time
         Set<Map.Entry<Socket, Date>> entries = socketDateMap.entrySet();
-        for (Map.Entry<Socket,Date> entry: entries){
+        for (Map.Entry<Socket, Date> entry: entries){
             //if the skew is larger than upper bound, ignore it
             if (upperBound < Math.abs(entry.getValue().getTime() - currentClock.getCurrentTime())) {
                 numOfIgnore += 1;
@@ -162,8 +166,25 @@ public class Server {
         }
     }
 
-    public static void putDateIntoMap(Socket socket, Date date){
+    /**
+     * put data into the map contains socket and its follower current time
+     */
+    public static void putDateIntoMap(Socket socket, Date date) {
         socketDateMap.put(socket,date);
+    }
+
+    /**
+     * set time of when broadcast
+     */
+    public static void setBroadcastTime(Long broadcastTime) {
+        Server.broadcastTime = broadcastTime;
+    }
+
+    /**
+     * get time of when broadcast
+     */
+    public static Long getBroadcastTime() {
+        return Server.broadcastTime;
     }
 
     public static void main(String args[])  {
@@ -177,10 +198,13 @@ public class Server {
 
 
 class TimeReceiver implements Runnable  {
-    private Socket currentSocket ;   //current socket
+    private Socket currentSocket;   //current socket
+    private Clock currentClock; //current clock
+    private Long tRound = 0l;
 
-    public TimeReceiver (Socket currentSocket)  {
-        this.currentSocket = currentSocket ;
+    public TimeReceiver (Socket currentSocket, Clock currentClock)  {
+        this.currentSocket = currentSocket;
+        this.currentClock = currentClock;
     }
 
     public void run()  {
@@ -189,8 +213,11 @@ class TimeReceiver implements Runnable  {
             br = new BufferedReader(new InputStreamReader(currentSocket.getInputStream())) ;
             String jsonStr;
             while((jsonStr = br.readLine()) != null)  {
-                Long currentTime = JsonUtil.json2long(jsonStr);
-                Date date = new Date(currentTime);
+                tRound = currentClock.getCurrentTime() - Server.getBroadcastTime();
+                System.out.println("Tround is: "+tRound);
+                Long followerTime = JsonUtil.json2long(jsonStr);
+                followerTime = followerTime - tRound/2;
+                Date date = new Date(followerTime);
                 //save time from response to map
                 Server.putDateIntoMap(currentSocket, date);
                 System.out.println("server receives: "+ currentSocket.getInetAddress().getHostAddress()+" time===> "+date);
@@ -200,4 +227,5 @@ class TimeReceiver implements Runnable  {
         }
     }
 }
+
 

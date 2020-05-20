@@ -53,7 +53,9 @@ public class Client {
         System.out.println("out of the while");
     }
 
-    //adjust time on this server
+    /**
+     *    adjust time on this server
+     */
     public void adjustClock(Long amountToAdjust) {
         if(amountToAdjust > 0l) {//adjust clock forward
             System.out.println("[Clock is slower. Should be adjust by: ]" + amountToAdjust);
@@ -66,7 +68,9 @@ public class Client {
         }
     }
 
-    //after receive a request from master, give a response
+    /**
+     *    after receive a request from master, give a response
+     */
     public void sendCurrentTime(Socket socket){
         Long currentTime = currentClock.getCurrentTime();
         String jsonStr = JsonUtil.long2Json(currentTime);
