@@ -14,9 +14,10 @@ public class Client {
     private int rate = 900;//clock rate
     private Socket socket;
 
-    public Client() {
+    public Client(Clock clock) {
         //create a clock for this machine and set its current time
-        currentClock = new Clock(new Date().getTime());
+//        currentClock = new Clock(new Date().getTime());
+        this.currentClock = clock;
         rate += new Random().nextInt(200);
 
         //a thread to update clock with a specific frequency
@@ -98,9 +99,10 @@ public class Client {
 
     public static void main(String args[])  {
         try {
-            Thread chat = new Thread(new ChatUI("follower"));
+            Clock clock = new Clock(new Date().getTime());
+            Thread chat = new Thread(new ChatUI("follower", clock));
             chat.start();
-            new Client() ;
+            new Client(clock) ;
         } catch(Exception e)  {
             e.printStackTrace();
         }

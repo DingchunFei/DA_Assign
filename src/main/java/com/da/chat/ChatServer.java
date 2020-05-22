@@ -1,5 +1,6 @@
 package com.da.chat;
 
+import com.da.common.Clock;
 import com.da.util.JsonUtil;
 
 import javax.swing.*;
@@ -22,9 +23,12 @@ public class ChatServer implements Runnable {
 
     private MessageManager messageManager;
 
-    public ChatServer(JTextArea jta_message, JTextArea jta_chat) {
+    private Clock clock;
+
+    public ChatServer(JTextArea jta_message, JTextArea jta_chat, Clock clock) {
         this.jta_message  = jta_message;
         this.jta_chat = jta_chat;
+        this.clock = clock;
         messageManager = new MessageManager();
         chatSocketManager = new ChatSocketManager();
     }
@@ -51,7 +55,7 @@ public class ChatServer implements Runnable {
     public void sendMessage(){
         String text = jta_message.getText();
         text = text.replace('\n', ' ');
-        Date date = new Date();
+        Date date = new Date(clock.getCurrentTime());
         messageManager.addMessage(date,text);
     }
 
@@ -82,7 +86,11 @@ class MessageReceiver implements Runnable{
 
             while((jsonStr = br.readLine()) != null)  {
 //                System.out.println("server receives: "+jsonStr);
-                messageManager.addMessage(new Date(), jsonStr);
+                Map<Date, String> message = JsonUtil.json2Map(jsonStr);
+                Set<Map.Entry<Date, String>> entries = message.entrySet();
+                for (Map.Entry<Date, String> entry: entries){
+                    messageManager.addMessage(entry.getKey(), entry.getValue());
+                }
             }
         }catch(IOException e)  {
             chatSocketManager.removeSocket(currentSocket);
@@ -150,8 +158,8 @@ class MessageSender implements Runnable {
 
         Set<Map.Entry<Date, String>> entries = messageManager.getAllMessage().entrySet();
         for (Map.Entry<Date, String> entry: entries){
-            System.out.println("Date: "+entry.getKey());
-            System.out.println("Message: "+entry.getValue());
+//            System.out.println("Date: "+entry.getKey());
+//            System.out.println("Message: "+entry.getValue());
             jta_chat.append(entry.getKey()+": "+entry.getValue()+"\n");
         }
 

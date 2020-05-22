@@ -25,9 +25,11 @@ public class Server {
 
     private MapManager mapManager;//a manager manages info about socket
 
-    public Server() throws IOException {
+    public Server(Clock clock) throws IOException {
         //create a clock for this machine and set its current time
-        currentClock = new Clock(new Date().getTime());
+//        currentClock = new Clock(new Date().getTime());
+        this.currentClock = clock;
+
         mapManager = new MapManager();
 
         ServerSocket ss = new ServerSocket(8090) ;
@@ -39,7 +41,7 @@ public class Server {
                 try {
                     Thread.sleep(1000);
                     currentClock.updateCurrentTime(1l * rate);
-//                    System.out.println("[current the master's time: ]"+new Date(currentClock.getCurrentTime())+" [Rate: ]"+rate);
+                    System.out.println("[current the master's time: ]"+new Date(currentClock.getCurrentTime())+" [Rate: ]"+rate);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -187,9 +189,10 @@ public class Server {
 
     public static void main(String args[])  {
         try {
-            Thread chat = new Thread(new ChatUI("master"));
+            Clock clock = new Clock(new Date().getTime());
+            Thread chat = new Thread(new ChatUI("master", clock));
             chat.start();
-            new Server();
+            new Server(clock);
         } catch(Exception e)  {
             e.printStackTrace();
         }

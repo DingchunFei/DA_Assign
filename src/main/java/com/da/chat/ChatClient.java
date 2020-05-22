@@ -1,11 +1,13 @@
 package com.da.chat;
 
+import com.da.common.Clock;
 import com.da.util.JsonUtil;
 
 import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,10 +21,12 @@ public class ChatClient implements Runnable {
 
     private Socket socket = null;
     private JTextArea jta_message, jta_chat;
+    private Clock clock;
 
-    public ChatClient(JTextArea jta_message, JTextArea jta_chat) {
+    public ChatClient(JTextArea jta_message, JTextArea jta_chat, Clock clock) {
         this.jta_message  = jta_message;
         this.jta_chat = jta_chat;
+        this.clock = clock;
     }
 
     @Override
@@ -59,10 +63,13 @@ public class ChatClient implements Runnable {
         try  {
             String text = jta_message.getText();
             text = text.replace('\n', ' ');
-            Date date = new Date();
+            Date date = new Date(clock.getCurrentTime());
+            Map<Date, String> message = new HashMap<>();
+            message.put(date,text);
+            String jsonStr = JsonUtil.map2Json(message);
             //send the data to server
             out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream())) ;
-            out.println(text);
+            out.println(jsonStr);
             out.flush();
         }catch(Exception e1) {
             e1.printStackTrace();

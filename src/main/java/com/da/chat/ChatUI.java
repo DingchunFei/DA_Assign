@@ -1,5 +1,7 @@
 package com.da.chat;
 
+import com.da.common.Clock;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -25,9 +27,11 @@ public class ChatUI extends JFrame implements Runnable{
     private ChatServer chatServer;
     private ChatClient chatClient;
     private String serverName;
+    private Clock clock;
 
-    public ChatUI(String serverName) {
+    public ChatUI(String serverName, Clock clock) {
         this.serverName = serverName;
+        this.clock = clock;
 
         jp_chat.add(jsp_chat);
         jta_chat.setLineWrap(true);
@@ -67,13 +71,13 @@ public class ChatUI extends JFrame implements Runnable{
     public void run() {
         if(serverName.equals("master")){
             System.out.println("master is running");
-            chatServer = new ChatServer(jta_message, jta_chat);
+            chatServer = new ChatServer(jta_message, jta_chat, clock);
             Thread thread = new Thread(chatServer);
             thread.start();
         }
         else if(serverName.equals("follower")){
             System.out.println("follower is running");
-            chatClient = new ChatClient(jta_message, jta_chat);
+            chatClient = new ChatClient(jta_message, jta_chat, clock);
             Thread thread = new Thread(chatClient);
             thread.start();
         }
