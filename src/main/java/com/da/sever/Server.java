@@ -1,12 +1,13 @@
-package com.da;
+package com.da.sever;
 
+import com.da.chat.ChatUI;
+import com.da.common.Clock;
 import com.da.util.JsonUtil;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Server {
 
@@ -100,13 +101,14 @@ public class Server {
      */
     private void adjustClock(Long amountToAdjust) {
         if(amountToAdjust > 0l) {//adjust clock forward
-//            System.out.println("[Clock is slower. Should be adjust by: ]" + amountToAdjust);
+            System.out.println("[Clock is slower. Should be adjust by: ]" + amountToAdjust);
             currentClock.updateCurrentTime(amountToAdjust);
         }
         else {//slow the clock
-//            System.out.println("[Clock is quicker. The skew is: ]" + amountToAdjust);
-            rate = (int) (rate * 0.99);
+            System.out.println("[Clock is quicker. The skew is: ]" + amountToAdjust);
+//            rate = (int) (rate * 0.99);
 //            System.out.println("[Now clock rate has been adjust as: ]" + rate);
+            System.out.println("However as a master, rate had better to stay unchanged]");
         }
     }
 
@@ -154,7 +156,7 @@ public class Server {
 
         //compute mean time
         meanTime = meanTime / (mapManager.getSocketDateMap().size() + 1 - numOfIgnore);
-//        System.out.println("[Mean time compute result :]" + new Date(meanTime));
+        System.out.println("[Mean time compute result :]" + new Date(meanTime));
 
         //adjust master's time, if it is beyond lowerBound
         if (lowerBound < Math.abs(meanTime - broadcastTime))
@@ -185,6 +187,8 @@ public class Server {
 
     public static void main(String args[])  {
         try {
+            Thread chat = new Thread(new ChatUI("master"));
+            chat.start();
             new Server();
         } catch(Exception e)  {
             e.printStackTrace();
@@ -193,143 +197,6 @@ public class Server {
 }
 
 
-class TimeReceiver implements Runnable  {
-    private Socket currentSocket;   //current socket
-    private Clock currentClock; //server's clock
-    private MapManager mapManager;//server's MapManager
-    private Long tRound = 0l;
-//    private int n = 0;
-    private BufferedReader br;
-    private InputStreamReader isr;
 
-    public TimeReceiver (Socket currentSocket, Clock currentClock, MapManager mapManager)  {
-        this.currentSocket = currentSocket;
-        this.currentClock = currentClock;
-        this.mapManager = mapManager;
-    }
-
-    public boolean stopThread() {
-        try {
-            if(currentSocket!=null){
-                isr.close();
-                br.close();
-                currentSocket.close();
-                System.out.println("close task successed");
-            }
-        } catch (IOException e) {
-            System.out.println("close task failded");
-            return false;
-        }
-        return true;
-    }
-
-    public void run()  {
-
-        try  {
-            isr = new InputStreamReader(currentSocket.getInputStream());
-            br = new BufferedReader(isr) ;
-            String jsonStr;
-
-            while((jsonStr = br.readLine()) != null)  {
-//                n++;
-                tRound = currentClock.getCurrentTime() - Server.getBroadcastTime();
-//                System.out.println("Tround is: "+tRound);
-                Long followerTime = JsonUtil.json2long(jsonStr);
-                followerTime = followerTime - tRound/2;
-                Date date = new Date(followerTime);
-                //save time from response to map
-                mapManager.putDateIntoMap(currentSocket, date);
-//                System.out.println("server receives: "+ currentSocket.getInetAddress().getHostAddress()+" time===> "+date);
-//                System.out.println(n);
-            }
-        }catch(IOException e)  {
-//            e.printStackTrace();
-            mapManager.removeThreadFromMap(currentSocket);
-        }
-    }
-}
-
-class MapManager {
-    //a map for each socket and its info, use type volatile to ensure thread secure
-    private Map<Socket, Date> socketDateMap;
-    //a map for each socket and the thread to handle it
-    private Map<Socket, Thread> socketThreadMap;
-
-    MapManager() {
-        socketDateMap = new HashMap<>();
-        socketThreadMap  = new HashMap<>();
-    }
-
-    /**
-     * put date into the map contains socket and its follower current time
-     */
-    public synchronized void putDateIntoMap(Socket socket, Date date) {
-        socketDateMap.put(socket,date);
-    }
-
-    /**
-     * remove date into the map contains socket and its follower current time
-     */
-    public synchronized void removeDateFromMap(Socket socket) {
-        socketDateMap.remove(socket);
-    }
-
-    /**
-     * remove date into the map contains socket and its follower current time
-     */
-    public synchronized void clearDateFromMap() {
-        socketDateMap.clear();
-    }
-
-    /**
-     * get all socketDateMap
-     */
-    public synchronized Map<Socket, Date> getSocketDateMap() {
-        return socketDateMap;
-    }
-
-    /**
-     * put socket and its handler thread into the map
-     */
-    public synchronized void putThreadIntoMap(Socket socket, Thread thread) {
-        socketThreadMap.put(socket,thread);
-        System.out.println("=======Put:"+socket+thread);
-        for(Object o : socketThreadMap.keySet()){
-            System.out.println("Now: "+o+": "+socketThreadMap.get(o));
-        }
-    }
-
-    /**
-     * remove socket and its handler thread into the map
-     * stop thread in a proper way
-     */
-    public synchronized void removeThreadFromMap(Socket socket) {
-        String ip = socket.getInetAddress().getHostAddress();
-        Thread thread = socketThreadMap.get(socket);
-        System.out.println("=======remove: "+thread);
-        thread.interrupt();
-        try {
-            socket.shutdownOutput();
-            socket.shutdownInput();
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        socketThreadMap.remove(socket);
-        for(Object o : socketThreadMap.keySet()){
-            System.out.println("Now: "+o+": "+socketThreadMap.get(o));
-        }
-        System.out.println("A follower close its connection: "+ip);
-    }
-
-    public synchronized List<Socket> getAllSocket() {
-        List<Socket> list = new ArrayList<>();
-        for(Map.Entry<Socket, Thread> entry : socketThreadMap.entrySet()){
-            Socket mapKey = entry.getKey();
-            list.add(mapKey);
-        }
-        return list;
-    }
-}
 
 

@@ -1,4 +1,4 @@
-package com.da;
+package com.da.common;
 
 /**
  * @author: Kandoka
@@ -9,7 +9,7 @@ package com.da;
 public class Clock {
     private Long currentTime;
 
-    Clock(Long currentTime) {
+    public Clock(Long currentTime) {
         this.currentTime = currentTime;
     }
 
