@@ -1,0 +1,24 @@
+Project struscture: A simple description about this project structure
+
+com.da
+chat: A package contains all functions for chatting system
+|--ChatClient: A chat follower server. manage to send chatting message to master chat server
+|--ChatServer: A chat master server. manage to broadcast all follower's chatting message
+|----MessageReceiver: A thread in master server to receive all message from followers
+|----MessageSender: A thread in master server to send all up-to-date message to followers
+|--MessageManager: A class to synchronously operate a list of message.
+|--ChatUI: A java swing UI for chatting room.
+--------------
+client: A package for follower server and implementing Berkeley Algorithm
+|--Client: A client server class. Give feedback to master server
+--------------
+server: A package for master server and implementing Berkeley Algorithm
+|--Server: A master server class. Manage to coordinate all followers time
+|--MapManager: A class to synchronously operate a list of sockets.|
+|--TimeReceiver: A thread in server to receive time querying response from all followers
+--------------
+common: A package for classes which all master and cilent may use
+|--Clock: A class for the entity and operations of a clock, all operations to the clock are synchronized.
+----------------
+util: A package of tool classes
+|--JsonUtil: Methods to transform messages to json fromat or transform json to readable message
