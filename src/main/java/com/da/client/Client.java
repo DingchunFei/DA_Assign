@@ -6,6 +6,7 @@ import com.da.util.JsonUtil;
 
 import java.io.*;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class Client {
@@ -18,7 +19,15 @@ public class Client {
         //create a clock for this machine and set its current time
 //        currentClock = new Clock(new Date().getTime());
         this.currentClock = clock;
-        rate += new Random().nextInt(200);
+//        rate += new Random().nextInt(200);
+
+        int situation = new Random().nextInt(3);
+        if(situation==0)
+            rate = 900;
+        else if(situation==1)
+            rate = 1100;
+        else
+            rate = 1500;
 
         //a thread to update clock with a specific frequency
         new Thread(()->{
@@ -26,7 +35,7 @@ public class Client {
                 try {
                     Thread.sleep(1000);
                     currentClock.updateCurrentTime(1l * rate);
-                    System.out.println("[current this follower's time: ]"+new Date(currentClock.getCurrentTime())+" [Rate: ]"+rate);
+                    System.out.println("[This follower's current time: ]"+new SimpleDateFormat("yyyy/MM/dd-HH:mm:ss:SSS").format(new Date(currentClock.getCurrentTime()))+" [Rate: ]"+rate);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -47,9 +56,11 @@ public class Client {
                     sendCurrentTime(socket);
                 }
                 else if (amountToAdjust == 0l) {
+                    System.out.println("Receive time adjust request from master");
                     System.out.println("Time running is proper, so it is unchanged");
                 }
                 else{//else clock needs to be adjusted
+                    System.out.println("Receive time adjust request from master");
                     adjustClock(amountToAdjust);
                 }
             }
@@ -70,13 +81,13 @@ public class Client {
      */
     private void adjustClock(Long amountToAdjust) {
         if(amountToAdjust > 0l) {//adjust clock forward
-            System.out.println("[Clock is slower. Should be adjust by: ]" + amountToAdjust);
+            System.out.println("[The follower clock is slower. Should be adjust by: ]" + amountToAdjust);
             currentClock.updateCurrentTime(amountToAdjust);
         }
         else {//slow the clock
-            System.out.println("[Clock is quicker. The skew is: ]" + amountToAdjust);
-            rate = (int) (rate * 0.99);
-            System.out.println("[Now clock rate has been adjust as: ]" + rate);
+            System.out.println("[The follower clock is quicker. The skew is: ]" + amountToAdjust);
+            rate = (int) (rate * 0.9);
+            System.out.println("[Now the follower clock rate has been adjust as: ]" + rate);
         }
     }
 

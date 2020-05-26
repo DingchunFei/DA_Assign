@@ -7,6 +7,7 @@ import com.da.util.JsonUtil;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class Server {
@@ -15,7 +16,7 @@ public class Server {
 
     public final static int lowerBound = 200;//allow slight skew
 
-    public final static int upperBound = 5*1000;//ignore too large skew//5 seconds
+    public final static int upperBound = 2*1000;//ignore too large skew//5 seconds
 
     private Clock currentClock;//clock of this server
 
@@ -41,7 +42,7 @@ public class Server {
                 try {
                     Thread.sleep(1000);
                     currentClock.updateCurrentTime(1l * rate);
-                    System.out.println("[current the master's time: ]"+new Date(currentClock.getCurrentTime())+" [Rate: ]"+rate);
+                    System.out.println("[The master's current time: ]"+new SimpleDateFormat("yyyy/MM/dd-HH:mm:ss:SSS").format(new Date(currentClock.getCurrentTime()))+" [Rate: ]"+rate);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -103,14 +104,14 @@ public class Server {
      */
     private void adjustClock(Long amountToAdjust) {
         if(amountToAdjust > 0l) {//adjust clock forward
-            System.out.println("[Clock is slower. Should be adjust by: ]" + amountToAdjust);
+            System.out.println("[The master clock is slower. Should be adjust by: ]" + amountToAdjust);
             currentClock.updateCurrentTime(amountToAdjust);
         }
         else {//slow the clock
-            System.out.println("[Clock is quicker. The skew is: ]" + amountToAdjust);
+            System.out.println("[The master clock is quicker. The skew is: ]" + amountToAdjust);
 //            rate = (int) (rate * 0.99);
-//            System.out.println("[Now clock rate has been adjust as: ]" + rate);
-            System.out.println("However as a master, rate had better to stay unchanged]");
+//            System.out.println("[Now master clock rate has been adjust as: ]" + rate);
+            System.out.println("However as a master, the clock rate had better to stay unchanged]");
         }
     }
 
@@ -135,7 +136,7 @@ public class Server {
 
         System.out.println("[The size of current follower] "+ mapManager.getAllSocket().size());
 
-        checkSocketsAlive();
+//        checkSocketsAlive();
 
         //waiting until all of followers give their response
         while(mapManager.getSocketDateMap().size()!=mapManager.getAllSocket().size()){
@@ -149,8 +150,9 @@ public class Server {
         Set<Map.Entry<Socket, Date>> entries = mapManager.getSocketDateMap().entrySet();
         for (Map.Entry<Socket, Date> entry: entries){
             //if the skew is larger than upper bound, ignore it
-            if (upperBound < Math.abs(entry.getValue().getTime() - currentClock.getCurrentTime())) {
+            if (upperBound < Math.abs(entry.getValue().getTime() - getBroadcastTime())) {
                 numOfIgnore += 1;
+                System.out.println("----A time has been ignored because the skew is: "+(entry.getValue().getTime() - getBroadcastTime()));
                 continue;
             }
             meanTime = meanTime + entry.getValue().getTime();
@@ -158,7 +160,7 @@ public class Server {
 
         //compute mean time
         meanTime = meanTime / (mapManager.getSocketDateMap().size() + 1 - numOfIgnore);
-        System.out.println("[Mean time compute result :]" + new Date(meanTime));
+        System.out.println("[Average time come out :]" + new SimpleDateFormat("yyyy/MM/dd-HH:mm:ss:SSS").format(new Date(meanTime)));
 
         //adjust master's time, if it is beyond lowerBound
         if (lowerBound < Math.abs(meanTime - broadcastTime))

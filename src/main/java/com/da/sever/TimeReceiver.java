@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -44,7 +45,7 @@ class TimeReceiver implements Runnable {
                 Date date = new Date(followerTime);
                 //save time from response to map
                 mapManager.putDateIntoMap(currentSocket, date);
-                System.out.println("server receives: "+ currentSocket.getInetAddress().getHostAddress()+" time===> "+date);
+                System.out.println("server receives: "+ currentSocket.getInetAddress().getHostAddress()+" time===> "+new SimpleDateFormat("yyyy/MM/dd-HH:mm:ss:SSS").format(date));
             }
         }catch(IOException e)  {
             mapManager.removeThreadFromMap(currentSocket);
