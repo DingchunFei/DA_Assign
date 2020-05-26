@@ -105,13 +105,14 @@ public class Server {
     private void adjustClock(Long amountToAdjust) {
         if(amountToAdjust > 0l) {//adjust clock forward
             System.out.println("[The master clock is slower. Should be adjust by: ]" + amountToAdjust);
+            rate = 1000;
             currentClock.updateCurrentTime(amountToAdjust);
         }
         else {//slow the clock
             System.out.println("[The master clock is quicker. The skew is: ]" + amountToAdjust);
-//            rate = (int) (rate * 0.99);
-//            System.out.println("[Now master clock rate has been adjust as: ]" + rate);
-            System.out.println("However as a master, the clock rate had better to stay unchanged]");
+            rate = (int) (rate * 0.9);
+            System.out.println("[Now master clock rate has been adjust as: ]" + rate);
+//            System.out.println("However as a master, the clock rate had better to stay unchanged]");
         }
     }
 
