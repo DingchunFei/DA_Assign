@@ -46,6 +46,7 @@ class TimeReceiver implements Runnable {
                 //save time from response to map
                 mapManager.putDateIntoMap(currentSocket, date);
                 System.out.println("server receives: "+ currentSocket.getInetAddress().getHostAddress()+" time===> "+new SimpleDateFormat("yyyy/MM/dd-HH:mm:ss:SSS").format(date));
+                System.out.println("[Tround is: ]"+tRound);
             }
         }catch(IOException e)  {
             mapManager.removeThreadFromMap(currentSocket);

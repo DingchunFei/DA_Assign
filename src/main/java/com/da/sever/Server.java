@@ -152,7 +152,7 @@ public class Server {
             //if the skew is larger than upper bound, ignore it
             if (upperBound < Math.abs(entry.getValue().getTime() - getBroadcastTime())) {
                 numOfIgnore += 1;
-                System.out.println("----A time has been ignored because the skew is: "+(entry.getValue().getTime() - getBroadcastTime()));
+                System.err.println("----A time has been ignored because the skew is: "+(entry.getValue().getTime() - getBroadcastTime()));
                 continue;
             }
             meanTime = meanTime + entry.getValue().getTime();

@@ -14,6 +14,7 @@ public class Client {
     private Clock currentClock;//clock of this server
     private int rate = 900;//clock rate
     private Socket socket;
+    private int tempRate = 1000;
 
     public Client(Clock clock) {
         //create a clock for this machine and set its current time
@@ -28,6 +29,8 @@ public class Client {
             rate = 1100;
         else
             rate = 1500;
+
+        tempRate = rate;
 
         //a thread to update clock with a specific frequency
         new Thread(()->{
@@ -81,6 +84,7 @@ public class Client {
      */
     private void adjustClock(Long amountToAdjust) {
         if(amountToAdjust > 0l) {//adjust clock forward
+            rate = tempRate;
             System.out.println("[The follower clock is slower. Should be adjust by: ]" + amountToAdjust);
             currentClock.updateCurrentTime(amountToAdjust);
         }
